@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './App.scss'
 
 const App = () => {
-    const canvas = useRef<HTMLCanvasElement>(null)
-    let context: CanvasRenderingContext2D | null
+    const canvas = useRef<HTMLCanvasElement>(null);
+    let context: CanvasRenderingContext2D | null;
+    const [isDrawing, setIsDrawing] = useState(false);
+
 
     // initialize the canvas context
     useEffect(() => {
@@ -17,30 +19,10 @@ const App = () => {
         }
     }, [])
 
-    useEffect(() => {
-        drawLine({ x: 20, y: 20, x1: 20, y1: 100 })
-
-        if (context) {
-            context.fillStyle = '#000000'
-            context.beginPath()
-            context.arc(50, 100, 20, 0, 2 * Math.PI)
-            context.fill()
-        }
-    }, [])
-
-    // draw a line
-    const drawLine = (info: any, style: any = {}) => {
-        const { x, y, x1, y1 } = info
-        const { color = 'black', width = 1 } = style
-
-        if (context) {
-            context.beginPath()
-            context.moveTo(x, y)
-            context.lineTo(x1, y1)
-            context.strokeStyle = color
-            context.lineWidth = width
-            context.stroke()
-        }
+    const SIZE_MIDENSIONS: {[key: string]: {width: number, height: number}} = {
+        sm: {width: 100, height: 100},
+        md: {width: 200, height: 200},
+        lg: {width: 300, height: 300}
     }
 
      const resizeCanvasToDisplaySize = (
@@ -49,25 +31,7 @@ const App = () => {
     ):void => {
         console.log(event)
 
-        let width, height
-
-        switch (event.target.value) {
-            case 'sm':
-                width = 100
-                height = 100
-                break
-            case 'md':
-                width = 200
-                height = 200
-                break
-            case 'lg':
-                width = 300
-                height = 300
-                break
-                default:
-                    width = 100
-                    height = 100
-        }
+        let {width, height} = SIZE_MIDENSIONS[event.target.value];
 
         if (context && (canvas.width !== width || canvas.height !== height)) {
             context.canvas.width = width
@@ -91,10 +55,38 @@ const App = () => {
                         <option value="lg">large</option>
                     </select>
                 </div>
-                <canvas ref={canvas}></canvas>
+                <canvas ref={canvas} 
+                onMouseDown={(e) => {
+                    // start drawing
+                    setIsDrawing(true);
+                    const context = e.currentTarget.getContext("2d");
+                    // begin path.
+                    if (context) {
+                      context.beginPath();
+                      context.lineWidth = 5;
+                      context.lineCap = "round";
+                      context.strokeStyle = "#ACD3ED";
+                      context.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    // only handle mouse moves when the mouse is already down.
+                    if (isDrawing) {
+                      const context = e.currentTarget.getContext("2d");
+                      if (context) {
+                        context.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+                        context.stroke();
+                      }
+                    }
+                  }}
+                  onMouseUp={() => {
+                    // end drawing.
+                    setIsDrawing(false);
+                  }}></canvas>
             </div>
         </div>
     )
 }
 
 export default App
+
