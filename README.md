@@ -1,5 +1,7 @@
 # Getting Started with Create React App
 
+Test task to demonstrate work with canvas for drawing only straight hoz/ver lines. Used 2 canvases: one for drawing the current line (like line preview) and the second one to display drawn lines
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
