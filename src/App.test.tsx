@@ -1,9 +1,4 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import App from './App';
-
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
-});
+import { render, screen } from '@testing-library/react'
+/** Unfortunately I don't have enough time to write proper tests for canvases functionality
+ * and I don't want to write tests like: 'should init with this md size' and 'should change size' etc
+ */

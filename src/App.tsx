@@ -1,162 +1,84 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './App.scss'
+import ShowingCanvas from './components/ShowingCanvas'
+import DrawingCanvas from './components/DrawingCanvas'
+import { CanvasSizeType, Line } from './models'
 
-const SIZE_DIMENSIONS: { [key: string]: { width: number; height: number } } = {
+export const SIZE_DIMENSIONS: {
+    [key: string]: { width: number; height: number }
+} = {
     sm: { width: 300, height: 200 },
     md: { width: 600, height: 400 },
     lg: { width: 900, height: 600 },
 }
 
 const App = () => {
-    const canvas = useRef<HTMLCanvasElement>(null)
-    let context: CanvasRenderingContext2D | null
-    const [isDrawing, setIsDrawing] = useState(false)
-    const [line, setLine] = useState<any>({})
-    const [canvasSize, setCanvasSize] = useState('md')
+    const [canvasSize, setCanvasSize] = useState<CanvasSizeType>('md')
+    const [linesArray, setLinesArray] = useState<Line[]>([])
 
-
-    // set intial canvas size in useEffect
+    // set intial canvas size
     useEffect(() => {
         setCanvasSize('md')
     }, [])
 
-    // initialize the canvas context
-    useEffect(() => {
-        // dynamically assign the width and height to canvas
-        const canvasEl = canvas.current
-        if (canvasEl) {
-            canvasEl.width = SIZE_DIMENSIONS[canvasSize]?.width;
-            canvasEl.height = SIZE_DIMENSIONS[canvasSize]?.height;
-            // get context of the canvas
-            context = canvasEl.getContext('2d')
-        }
-    }, [canvasSize])
-
-    const clearCanvas = (
-        context: CanvasRenderingContext2D,
-        canvas: HTMLCanvasElement
-    ) => {
-        if (!context || !canvas) return
-        const { width, height } = canvas
-        context.clearRect(0, 0, width, height)
-    }
-
-    const resizeCanvas = (
+    const onChangeCanvasSize = (
         event: React.ChangeEvent<HTMLSelectElement>
     ): void => {
-        setCanvasSize(event.target.value)
-    }
-
-    const getCanvasMouseCoordinates = (
-        e: React.MouseEvent<HTMLCanvasElement>,
-        canvas: HTMLCanvasElement | null
-    ) => {
-        if (!canvas) return null
-
-        const rect = canvas.getBoundingClientRect()
-        const scaleX = canvas.width / rect.width
-        const scaleY = canvas.height / rect.height
-        const offsetX = (e.clientX - rect.left) * scaleX
-        const offsetY = (e.clientY - rect.top) * scaleY
-
-        return { x: offsetX, y: offsetY }
-    }
-
-    const getStraitenedLineEnd = (currentEnd: any, line: any) => {
-        if (!line.start) return null
-        const xDiff = Math.abs(currentEnd.x - line.start.x)
-        const yDiff = Math.abs(currentEnd.y - line.start.y)
-        return {
-            x: xDiff > yDiff ? currentEnd.x : line.start.x,
-            y: xDiff > yDiff ? line.start.y : currentEnd.y,
-        }
+        setCanvasSize(event.target.value as CanvasSizeType)
     }
 
     return (
         <div className="App">
-            <div>
-                <div>
+            <div className="wrapper">
+                <p>
+                    <label htmlFor="size">Canvas size: </label>
                     <select
                         name="size"
                         id="size"
                         value={canvasSize}
-                        onChange={(event) =>
-                            resizeCanvas(event)
-                        }
+                        onChange={(event) => onChangeCanvasSize(event)}
                     >
                         <option value="sm">small</option>
                         <option value="md">medium</option>
                         <option value="lg">large</option>
                     </select>
+                </p>
+                <div className="canvas-wrapper">
+                    <div
+                        className="canvas-wrapper__container"
+                        style={{
+                            width: SIZE_DIMENSIONS[canvasSize]?.width,
+                            height: SIZE_DIMENSIONS[canvasSize]?.height,
+                        }}
+                    >
+                        <DrawingCanvas
+                            canvasSize={canvasSize}
+                            setLinesArray={setLinesArray}
+                        ></DrawingCanvas>
+                        <ShowingCanvas
+                            canvasSize={canvasSize}
+                            linesArray={linesArray}
+                        ></ShowingCanvas>
+                    </div>
                 </div>
-                <canvas
-                    ref={canvas}
-                    onMouseDown={(e) => {
-                        // start drawing
-                        setIsDrawing(true)
-                        const context = e.currentTarget.getContext('2d')
-                        // begin path.
-                        if (context) {
-                            context.beginPath()
-                            context.lineWidth = 5
-                            context.lineCap = 'round'
-                            context.strokeStyle = '#ACD3ED'
-                            context.moveTo(
-                                e.nativeEvent.offsetX,
-                                e.nativeEvent.offsetY
-                            )
-                            //   line.start = [e.nativeEvent.offsetX, e.nativeEvent.offsetY];
-                            setLine({
-                                start: {
-                                    x: e.nativeEvent.offsetX,
-                                    y: e.nativeEvent.offsetY,
-                                },
-                            })
-                            console.log('LINE START: ', line)
-                        }
-                    }}
-                    onMouseMove={(e) => {
-                        // only handle mouse moves when the mouse is already down.
-                        if (isDrawing) {
-                            const context = e.currentTarget.getContext('2d')
-                            if (context) {
-                                let point = getCanvasMouseCoordinates(
-                                    e,
-                                    canvas.current
-                                )
-                                const adustedPoint = getStraitenedLineEnd(point, line)
-                                context.lineTo(
-                                    adustedPoint?.x,
-                                    adustedPoint?.y
-                                )
-                                setLine({ ...line, end: adustedPoint })
-                                console.log('LINE MOVE: ', line)    
-                                context.stroke()
+            </div>
+
+            <div className="lines-list">
+                <div className="lines-list__container">
+                    <p>List on lines:</p>
+                    {linesArray.map((l, i) => (
+                        <div
+                            key={
+                                i +
+                                '' +
+                                l?.start?.x +
+                                l?.start?.y +
+                                l?.end?.x +
+                                l?.end?.y
                             }
-                        }
-                    }}
-                    onMouseUp={(e) => {
-                        // end drawing.
-                        const context = e.currentTarget.getContext('2d')
-                        if (context) {
-                            let point = getCanvasMouseCoordinates(
-                                e,
-                                canvas.current
-                            )
-                      
-                            const newEnd = getStraitenedLineEnd(point, line)
-                            // context.moveTo(
-                            //     line.start.x,
-                            //     line.start.y
-                            // )
-                  
-                            // context.lineTo(newEnd?.x, newEnd?.y)
-                            // context.stroke()
-                            console.log('LINE END: ', line)
-                            setIsDrawing(false)
-                        }
-                    }}
-                ></canvas>
+                        >{`Line ${i + 1} - points [${l.start?.x}, ${l.start?.y}, ${l.end?.x}, ${l.end?.y}]`}</div>
+                    ))}
+                </div>
             </div>
         </div>
     )

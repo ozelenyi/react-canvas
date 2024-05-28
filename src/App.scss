@@ -1,7 +1,33 @@
 .App {
-  text-align: center;
+    text-align: center;
+    .wrapper {
+        text-align: center;
+    }
+    .canvas-wrapper {
+        display: flex;
+        justify-content: center;
+        &__container {
+            display: flex;
+            position: relative;
+        }
+    }
 
-  canvas {
-    border: 1px solid black;
-  }
+    .lines-list {
+        text-align: left;
+        display: flex;
+        justify-content: center;
+        &__container {
+            text-align: left;
+            width: 300px;
+        }
+    }
+
+    canvas#drawingCanvas {
+        z-index: 2;
+    }
+
+    canvas {
+        position: absolute;
+        border: 1px solid black;
+    }
 }
